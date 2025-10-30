@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Share Profile</title>
+  <style>
+    body { margin:0; display:flex; justify-content:center; align-items:center; height:100%; }
+    #Share-Profile {
+      padding:10px 16px; border-radius:8px; background:#007bff; color:white; border:none;
+      font-size:16px; cursor:pointer;
+    }
+    #Share-Profile:hover { background:#0056b3; }
+  </style>
+</head>
+<body>
+  <button id="Share-Profile">Share Profile</button>
+
+  <script>
+    // Get URL from query parameter
+    const params = new URLSearchParams(window.location.search);
+    let shareUrl = params.get('url') || 'https://www.google.com';
+
+    document.getElementById("Share-Profile").addEventListener("click", () => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Check out this profile',
+          text: 'Take a look at this!',
+          url: shareUrl
+        }).then(() => console.log('Shared successfully'))
+          .catch(err => console.error('Share failed:', err));
+      } else {
+        alert('Sharing not supported on this device. Opening in a new tab.');
+        window.open(shareUrl, '_blank');
+      }
+    });
+  </script>
+</body>
+</html>
