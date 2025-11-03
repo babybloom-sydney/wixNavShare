@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+
   <style>
     body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
     .copy-container{display:flex;gap:8px;margin-bottom:12px;}
@@ -34,10 +36,13 @@
     .fb-link-text .description{font-size:13px;color:#050505;}
     #loader{text-align:center;margin:40px;font-size:16px;color:#666;}
     .error{color:red;text-align:center;margin:40px;}
+    .debug{font-size:12px;color:#666;margin:20px;background:#f0f0f0;padding:10px;border-radius:4px;max-width:500px;overflow:auto;}
   </style>
 </head>
 <body>
+
 <div id="loader">Loading your profile...</div>
+<div id="debug" class="debug"></div>
 
 <div class="copy-container" style="display:none;">
   <button class="copy-btn" id="copyBtn">Copy Post</button>
@@ -52,7 +57,9 @@
       <div class="fb-time">Just now</div>
     </div>
   </div>
+
   <div class="fb-content" id="postText"><p>Loading...</p></div>
+
   <div class="fb-link-preview">
     <img id="previewImage" src="" alt="Preview">
     <div class="fb-link-text">
@@ -61,6 +68,7 @@
       <div class="description" id="previewDesc">Loading...</div>
     </div>
   </div>
+
   <div class="fb-reactions-bar">
     <div class="fb-reactions">
       <img src="https://drive.google.com/thumbnail?id=1fYJDK5-RDUYNw7smpK0TKKBxU4suCdq6&sz=w2000-h1050" class="reaction-icons-img" alt="Reactions">
@@ -68,123 +76,145 @@
     </div>
     <div class="fb-comments-count">6 comments</div>
   </div>
+
   <div class="fb-footer">
     <div>Like</div><div>Comment</div><div>Share</div>
   </div>
 </div>
 
 <script>
+  // Wait for the HTML document to be ready
   document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
+    const debug = document.getElementById('debug');
+
     try {
+      // 1. Get the URL parameter
       const urlParams = new URLSearchParams(window.location.search);
       const dataParam = urlParams.get('data');
-      if (!dataParam) throw new Error('No data in URL');
 
+      if (!dataParam) {
+        throw new Error('No data param in URL');
+      }
+      
+      debug.innerHTML = `Found data param (${dataParam.length} chars)<br>Decoding...`;
+
+      // 2. Decode the Base64 string
       const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
       const compressedData = atob(base64Data);
-      const compressedArray = new Uint8Array(compressedData.length);
-      for (let i = 0; i < compressedData.length; i++) {
-        compressedArray[i] = compressedData.charCodeAt(i);
-      }
+
+      // 3. Decompress the data
+      const compressedArray = new Uint8Array(compressedData.length).map((_, i) => compressedData.charCodeAt(i));
       const jsonString = pako.inflate(compressedArray, { to: 'string' });
+
+      debug.innerHTML += `<br>Decompressed to JSON (${jsonString.length} chars)`;
+
+      // 4. Parse the JSON
       const data = JSON.parse(jsonString);
 
-      if (!data.contactId) throw new Error('Invalid data');
+      if (!data.contactId) {
+        throw new Error('Data is corrupt or missing key fields');
+      }
 
+      // 5. We have the data! Render it.
       renderPreview(data);
+
     } catch (err) {
+      // Handle any errors in the process
       loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      if (debug) {
+        debug.innerHTML += `<br><strong>Failed:</strong> ${err.message}`;
+      }
     }
   });
 
+  /**
+   * This function takes the final data and populates the HTML.
+   * It also sets up the corrected button logic.
+   */
   function renderPreview(data) {
-    document.getElementById('loader').remove();
+    const loader = document.getElementById('loader');
+    const debug = document.getElementById('debug');
+    
+    // We build a new 'profileData' object here to ensure all
+    // fields are correct and have fallbacks.
+    const profileData = {
+      contactId: data.contactId,
+      firstName: data.firstName || 'Nanny',
+      suburb: data.suburb || 'Sydney',
+      profilePicture: data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg',
+      nanny_ad: data.nanny_ad || data.profilePicture || '', // Fallback to profile pic
+      bioNanny: data.bioNanny || '',
+      shareUrl: `https://babybloomsydney.com.au/nanny/${data.contactId}` // <-- This is the corrected URL
+    };
+
+    // Remove loading elements
+    if (loader) loader.remove();
+    if (debug) debug.remove();
+
+    // Show the content
     document.querySelector('.copy-container').style.display = 'flex';
     document.querySelector('.fb-post').style.display = 'block';
 
-    document.getElementById('profilePic').src = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
-    document.getElementById('userName').textContent = data.firstName;
-    document.getElementById('previewImage').src = data.nanny_ad || data.profilePicture || '';
-    document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
-    document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
+    // Populate the content
+    document.getElementById('profilePic').src = profileData.profilePicture;
+    document.getElementById('userName').textContent = profileData.firstName;
+    document.getElementById('previewImage').src = profileData.nanny_ad;
+    document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${profileData.suburb}`;
+    document.getElementById('previewDesc').textContent = `Hi, I'm ${profileData.firstName} and I'm now available to Nanny!`;
 
-    const bio = data.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    // Set the post text from HTML
+    // Your original (and correct) logic to handle newlines
+    const bio = profileData.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
     document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
+    
+    // --- CORRECTED BUTTON LOGIC ---
+    const copyBtn = document.getElementById('copyBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    
+    // --- COPY BUTTON FIX ---
+    copyBtn.addEventListener('click', () => {
+      // 1. Create a plain text version from the bio HTML
+      // We use profileData.bioNanny which is the raw HTML
+      let copyText = profileData.bioNanny;
+      
+      // 2. Replace <br> tags with newline characters
+      copyText = copyText.replace(/<br\s*\/?>/gi, '\n');
+ 
+      // 3. Strip all other HTML tags
+      copyText = copyText.replace(/<[^>]*>/g, '');
+      
+      // 4. Decode any HTML entities (like &amp; -> &)
+      const tempEl = document.createElement('textarea');
+      tempEl.innerHTML = copyText;
+      copyText = tempEl.value;
+
+      // 5. Write the *clean text* to the clipboard
+      navigator.clipboard.writeText(copyText).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy Post', 2000);
+      });
+    });
+    
+    // --- SHARE BUTTON FIX ---
+    shareBtn.addEventListener('click', () => {
+      // This button shares the *actual profile URL*
+      if (navigator.share) {
+        // Use Web Share API (Mobile)
+        navigator.share({
+          title: `Nanny Profile: ${profileData.firstName}`,
+          text: `Check out ${profileData.firstName}'s profile!`,
+          url: profileData.shareUrl // <-- USES THE CORRECT URL
+        });
+      } else {
+        // Fallback for Desktop (Copy link to clipboard)
+        navigator.clipboard.writeText(profileData.shareUrl).then(() => { // <-- USES THE CORRECT URL
+          shareBtn.textContent = 'Link Copied!';
+          setTimeout(() => shareBtn.textContent = 'Share Profile', 2000);
+        });
+      }
+    });
   }
-
-  // === COPY POST - CLEAN TEXT ONLY ===
-  document.getElementById('copyBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const postEl = document.getElementById('postText');
-    const clone = postEl.cloneNode(true);
-    clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-    let text = clone.textContent.trim();
-    text = text.split('\n').map(l => l.trim()).join('\n');
-
-    let copied = false;
-    if (navigator.clipboard) {
-      try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {}
-    }
-    if (!copied) {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      copied = document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-
-    if (copied) {
-      e.target.textContent = 'Post Copied';
-      e.target.classList.add('copied');
-      setTimeout(() => {
-        e.target.textContent = 'Copy Post';
-        e.target.classList.remove('copied');
-      }, 1000);
-    }
-  });
-
-  // === SHARE PROFILE - CORRECT NANNY URL ===
-  document.getElementById('shareBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const urlParams = new URLSearchParams(window.location.search);
-    const dataParam = urlParams.get('data');
-    let shareUrl = 'https://babybloomsydney.com.au';
-
-    try {
-      const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-      const compressedData = atob(base64Data);
-      const compressedArray = new Uint8Array(compressedData.length);
-      for (let i = 0; i < compressedData.length; i++) {
-        compressedArray[i] = compressedData.charCodeAt(i);
-      }
-      const jsonString = pako.inflate(compressedArray, { to: 'string' });
-      const data = JSON.parse(jsonString);
-      shareUrl = data.shareUrl || shareUrl;
-    } catch (e) {}
-
-    const shareData = {
-      title: document.getElementById('previewTitle').textContent,
-      text: document.getElementById('previewDesc').textContent,
-      url: shareUrl
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        e.target.textContent = 'Shared!';
-        e.target.classList.add('copied');
-        setTimeout(() => {
-          e.target.textContent = 'Share Profile';
-          e.target.classList.remove('copied');
-        }, 1000);
-      } catch (err) {
-        alert('Share failed.');
-      }
-    } else {
-      alert('Share not supported.');
-    }
-  });
 </script>
 
 </body>
