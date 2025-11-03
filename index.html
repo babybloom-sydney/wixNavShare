@@ -84,9 +84,9 @@
 </div>
 
 <script>
-  /*     This is a valid JavaScript block.
+  /* This is a valid JavaScript block.
     It will not print to the screen.
-  */
+  */
 
   // Wait for the HTML document to be ready
   document.addEventListener('DOMContentLoaded', () => {
@@ -122,8 +122,8 @@
       }
 
       // 5. We have the data! Render it.
-      // Note: We pass the raw 'data' object.
-      // The renderPreview function will now build its own clean profileData.
+      // We pass the raw 'data' object. The renderPreview function 
+      // will build the final 'profileData' object with fallbacks.
       renderPreview(data);
 
     } catch (err) {
@@ -143,10 +143,10 @@
     const loader = document.getElementById('loader');
     const debug = document.getElementById('debug');
     
-    /*       === DATA DEFINITION ===
-      We build a new 'profileData' object here to ensure all
-      fields are correct and have fallbacks.
-    */
+    /* === DATA DEFINITION ===
+      We build a new 'profileData' object here to ensure all
+      fields are correct and have fallbacks.
+    */
     const profileData = {
       contactId: data.contactId,
       firstName: data.firstName || 'Nanny',
@@ -154,7 +154,7 @@
       profilePicture: data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg',
       nanny_ad: data.nanny_ad || data.profilePicture || '', // Fallback to profile pic
       bioNanny: data.bioNanny || '',
-      shareUrl: `https://babybloomsydney.com.au/nanny/${data.contactId}` // <-- This is the corrected URL
+item     shareUrl: `https://babybloomsydney.com.au/nanny/${data.contactId}` // <-- This is the corrected URL
     };
 
     // Remove loading elements
@@ -169,26 +169,29 @@
     document.getElementById('profilePic').src = profileData.profilePicture;
     document.getElementById('userName').textContent = profileData.firstName;
     document.getElementById('previewImage').src = profileData.nanny_ad;
-IC('previewTitle').textContent = `Experienced Nanny Available | ${profileData.suburb}`;
+    document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${profileData.suburb}`;
     document.getElementById('previewDesc').textContent = `Hi, I'm ${profileData.firstName} and I'm now available to Nanny!`;
 
     // Set the post text from HTML
-    document.getElementById('postText').innerHTML = profileData.bioNanny;
+    // Your original code was correct, this replaces <br> etc. then wraps in <p>
+    const bio = profileData.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
     
     /*
-      === CORRECTED BUTTON LOGIC ===
-    */
+      === CORRECTED BUTTON LOGIC ===
+    */
     const copyBtn = document.getElementById('copyBtn');
     const shareBtn = document.getElementById('shareBtn');
-   className
+   
     // --- COPY BUTTON FIX ---
     copyBtn.addEventListener('click', () => {
       // 1. Create a plain text version from the bio HTML
+      // We use profileData.bioNanny which is the raw HTML
       let copyText = profileData.bioNanny;
       
       // 2. Replace <br> tags with newline characters
       copyText = copyText.replace(/<br\s*\/?>/gi, '\n');
-Code
+  
       // 3. Strip all other HTML tags
       copyText = copyText.replace(/<[^>]*>/g, '');
       
@@ -216,7 +219,7 @@ S         text: `Check out ${profileData.firstName}'s profile!`,
         });
       } else {
         // Fallback for Desktop (Copy link to clipboard)
-        navigator.clipboard.writeText(profileData.shareUrl).then(() => { // <-- USES THE CORRECT URL
+Services         navigator.clipboard.writeText(profileData.shareUrl).then(() => { // <-- USES THE CORRECT URL
           shareBtn.textContent = 'Link Copied!';
           setTimeout(() => shareBtn.textContent = 'Share Profile', 2000);
         });
