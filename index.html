@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nanny Profile Preview</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nanny Profile Preview</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
 
-  <style>
-    body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
-    .copy-container{display:flex;gap:8px;margin-bottom:12px;}
-    .copy-btn,.share-btn{background:#1877F2;color:white;border:none;padding:10px 16px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease;}
-    .copy-btn:hover,.share-btn:hover{background:#1666d1;}
-    .copy-btn.copied,.share-btn.copied{background:#4B8BF4;}
-    .fb-post{width:500px;max-width:100%;border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);}
-    .fb-header{display:flex;align-items:center;padding:12px;}
-    .fb-header img{width:40px;height:40px;border-radius:50%;margin-right:10px;}
-    .fb-header .fb-user-name{font-weight:bold;font-size:14px;color:#050505;}
-    .fb-header .fb-time{font-size:12px;color:#65676b;}
-    .fb-content{padding:0 12px 12px;font-size:14px;line-height:1.45;color:#050505;}
-    .fb-content p{margin:0;word-break:break-word;display:inline;}
-    .fb-reactions-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 12px 8px;border-top:1px solid #ddd;font-size:13px;line-height:1;}
-    .fb-reactions{display:inline-flex;align-items:center;gap:5px;}
-    .reaction-icons-img{width:38px;height:18px;vertical-align:-2px;image-rendering:crisp-edges;}
-    .fb-reactions span,.fb-comments-count{color:#65676b;font-weight:600;cursor:pointer;}
-    .fb-reactions span:hover,.fb-comments-count:hover{text-decoration:underline;}
-    .fb-footer{display:flex;justify-content:space-around;border-top:1px solid #ddd;padding:8px 0;font-size:14px;color:#65676b;}
-    .fb-footer div{cursor:pointer;padding:6px 0;text-align:center;flex:1;user-select:none;}
-    .fb-footer div:hover{background:#f2f2f2;border-radius:4px;}
-    .fb-link-preview{border:1px solid #ddd;border-radius:6px;margin:12px;overflow:hidden;background:#f8f9fa;}
-    .fb-link-preview img{width:100%;display:block;object-fit:cover;}
-    .fb-link-text{padding:8px;}
-    .fb-link-text .domain{font-size:11px;color:#65676b;margin-bottom:2px;}
-    .fb-link-text .title{font-weight:bold;font-size:14px;color:#050505;margin-bottom:2px;}
-    .fb-link-text .description{font-size:13px;color:#050505;}
-    #loader{text-align:center;margin:40px;font-size:16px;color:#666;}
-    .error{color:red;text-align:center;margin:40px;}
-    .debug{font-size:12px;color:#666;margin:20px;background:#f0f0f0;padding:10px;border-radius:4px;max-width:500px;overflow:auto;}
-  </style>
+  <style>
+    body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
+    .copy-container{display:flex;gap:8px;margin-bottom:12px;}
+    .copy-btn,.share-btn{background:#1877F2;color:white;border:none;padding:10px 16px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease;}
+    .copy-btn:hover,.share-btn:hover{background:#1666d1;}
+    .copy-btn.copied,.share-btn.copied{background:#4B8BF4;}
+    .fb-post{width:500px;max-width:100%;border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);}
+    .fb-header{display:flex;align-items:center;padding:12px;}
+    .fb-header img{width:40px;height:40px;border-radius:50%;margin-right:10px;}
+    .fb-header .fb-user-name{font-weight:bold;font-size:14px;color:#050505;}
+    .fb-header .fb-time{font-size:12px;color:#65676b;}
+    .fb-content{padding:0 12px 12px;font-size:14px;line-height:1.45;color:#050505;}
+    .fb-content p{margin:0;word-break:break-word;display:inline;}
+    .fb-reactions-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 12px 8px;border-top:1px solid #ddd;font-size:13px;line-height:1;}
+    .fb-reactions{display:inline-flex;align-items:center;gap:5px;}
+    .reaction-icons-img{width:38px;height:18px;vertical-align:-2px;image-rendering:crisp-edges;}
+    .fb-reactions span,.fb-comments-count{color:#65676b;font-weight:600;cursor:pointer;}
+  
+    .fb-reactions span:hover,.fb-comments-count:hover{text-decoration:underline;}
+    .fb-footer{display:flex;justify-content:space-around;border-top:1px solid #ddd;padding:8px 0;font-size:14px;color:#65676b;}
+    .fb-footer div{cursor:pointer;padding:6px 0;text-align:center;flex:1;user-select:none;}
+    .fb-footer div:hover{background:#f2f2f2;border-radius:4px;}
+    .fb-link-preview{border:1px solid #ddd;border-radius:6px;margin:12px;overflow:hidden;background:#f8f9fa;}
+    .fb-link-preview img{width:100%;display:block;object-fit:cover;}
+    .fb-link-text{padding:8px;}
+    .fb-link-text .domain{font-size:11px;color:#65676b;margin-bottom:2px;}
+    .fb-link-text .title{font-weight:bold;font-size:14px;color:#050505;margin-bottom:2px;}
+    .fb-link-text .description{font-size:13px;color:#050505;}
+    #loader{text-align:center;margin:40px;font-size:16px;color:#666;}
+    .error{color:red;text-align:center;margin:40px;}
+    .debug{font-size:12px;color:#666;margin:20px;background:#f0f0f0;padding:10px;border-radius:4px;max-width:500px;overflow:auto;}
+  </style>
 </head>
 <body>
 
@@ -45,178 +46,183 @@
 <div id="debug" class="debug"></div>
 
 <div class="copy-container" style="display:none;">
-  <button class="copy-btn" id="copyBtn">Copy Post</button>
-  <button class="share-btn" id="shareBtn">Share Profile</button>
+  <button class="copy-btn" id="copyBtn">Copy Post</button>
+  <button class="share-btn" id="shareBtn">Share Profile</button>
 </div>
 
 <div class="fb-post" style="display:none;">
-  <div class="fb-header">
-    <img id="profilePic" src="" alt="Profile">
-    <div>
-      <div class="fb-user-name" id="userName">Loading...</div>
-      <div class="fb-time">Just now</div>
-    </div>
-  </div>
+  <div class="fb-header">
+    <img id="profilePic" src="" alt="Profile">
+    <div>
+      <div class="fb-user-name" id="userName">Loading...</div>
+      <div class="fb-time">Just now</div>
+    </div>
+  </div>
 
-  <div class="fb-content" id="postText"><p>Loading...</p></div>
+  <div class="fb-content" id="postText"><p>Loading...</p></div>
 
-  <div class="fb-link-preview">
-    <img id="previewImage" src="" alt="Preview">
-    <div class="fb-link-text">
-      <div class="domain">BABYBLOOMSYDNEY.COM.AU</div>
-      <div class="title" id="previewTitle">Loading...</div>
-      <div class="description" id="previewDesc">Loading...</div>
-    </div>
-  </div>
+  <div class="fb-link-preview">
+    <img id="previewImage" src="" alt="Preview">
+    <div class="fb-link-text">
+      <div class="domain">BABYBLOOMSYDNEY.COM.AU</div>
+      <div class="title" id="previewTitle">Loading...</div>
+      <div class="description" id="previewDesc">Loading...</div>
+    </div>
+  </div>
 
-  <div class="fb-reactions-bar">
-    <div class="fb-reactions">
-      <img src="https://drive.google.com/thumbnail?id=1fYJDK5-RDUYNw7smpK0TKKBxU4suCdq6&sz=w2000-h1050" class="reaction-icons-img" alt="Reactions">
-      <span>12</span>
-    </div>
-    <div class="fb-comments-count">6 comments</div>
-  </div>
+  <div class="fb-reactions-bar">
+    <div class="fb-reactions">
+      <img src="https://drive.google.com/thumbnail?id=1fYJDK5-RDUYNw7smpK0TKKBxU4suCdq6&sz=w2000-h1050" class="reaction-icons-img" alt="Reactions">
+      <span>12</span>
+    </div>
+    <div class="fb-comments-count">6 comments</div>
+  </div>
 
-  <div class="fb-footer">
-    <div>Like</div><div>Comment</div><div>Share</div>
-  </div>
+  <div class="fb-footer">
+    <div>Like</div><div>Comment</div><div>Share</div>
+  </div>
 </div>
 
-
 <script>
-  /*
-    SCRIPT 2: This is the main script block.
-    It waits for the page to load, then decodes the URL.
-  */
-  document.addEventListener('DOMContentLoaded', () => {
-    const loader = document.getElementById('loader');
-    const debug = document.getElementById('debug');
+  /*     This is a valid JavaScript block.
+    It will not print to the screen.
+  */
 
-    try {
-      // 1. Get the URL parameter
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data'); // e.g., ?data=eJy1V...
+  // Wait for the HTML document to be ready
+  document.addEventListener('DOMContentLoaded', () => {
+    const loader = document.getElementById('loader');
+    const debug = document.getElementById('debug');
 
-      if (!dataParam) {
-        throw new Error('No data param in URL');
-      }
-      
-      debug.innerHTML = `Found data param (${dataParam.length} chars)<br>Decoding...`;
+    try {
+      // 1. Get the URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const dataParam = urlParams.get('data');
 
-      // 2. Decode the URL-safe Base64 string
-      // We replace URL-safe chars '-' and '_' back to '+' and '/'
-      const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-      const compressedData = atob(base64Data); // 'atob' decodes Base64
+      if (!dataParam) {
+        throw new Error('No data param in URL');
+      }
+      
+      debug.innerHTML = `Found data param (${dataParam.length} chars)<br>Decoding...`;
 
-      // 3. Decompress the data
-      // Convert the binary string to a Uint8Array for pako
-      const compressedArray = new Uint8Array(compressedData.length).map((_, i) => compressedData.charCodeAt(i));
-      const jsonString = pako.inflate(compressedArray, { to: 'string' });
+      // 2. Decode the Base64 string
+      const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
+      const compressedData = atob(base64Data);
 
-      debug.innerHTML += `<br>Decompressed to JSON (${jsonString.length} chars)`;
+      // 3. Decompress the data
+      const compressedArray = new Uint8Array(compressedData.length).map((_, i) => compressedData.charCodeAt(i));
+      const jsonString = pako.inflate(compressedArray, { to: 'string' });
 
-      // 4. Parse the JSON
-      const data = JSON.parse(jsonString);
+      debug.innerHTML += `<br>Decompressed to JSON (${jsonString.length} chars)`;
 
-      if (!data.contactId) {
-        throw new Error('Data is corrupt or missing contactId');
-      }
+      // 4. Parse the JSON
+      const data = JSON.parse(jsonString);
 
-      // 5. We have the data! Render the preview.
-      renderPreview(data);
+      if (!data.contactId) {
+        throw new Error('Data is corrupt or missing key fields');
+      }
 
-    } catch (err) {
-      // Handle any errors in the process
-      loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
-      if (debug) {
-        debug.innerHTML += `<br><strong>Failed:</strong> ${err.message}`;
-      }
-    }
-  });
+      // 5. We have the data! Render it.
+      // Note: We pass the raw 'data' object.
+      // The renderPreview function will now build its own clean profileData.
+      renderPreview(data);
 
-  /**
-   * This function takes the final data and populates the HTML.
-   * It also sets up the corrected button logic.
-   */
-  function renderPreview(data) {
-    const loader = document.getElementById('loader');
-    const debug = document.getElementById('debug');
-    
-    // Create the final data object, filling in defaults
-    const profileData = {
-      contactId: data.contactId,
-      firstName: data.firstName || 'Nanny',
-      suburb: data.suburb || 'Sydney',
-      profilePicture: data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg', // Default pic
-      nanny_ad: data.nanny_ad || data.profilePicture || '', // Fallback to profile pic
-      bioNanny: data.bioNanny || '',
-      shareUrl: `https://babybloomsydney.com.au/nanny/${data.contactId}`
-    };
+    } catch (err) {
+      // Handle any errors in the process
+      loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+      if (debug) {
+        debug.innerHTML += `<br><strong>Failed:</strong> ${err.message}`;
+      }
+    }
+  });
 
-    // Remove loading elements
-    if (loader) loader.remove();
-    if (debug) debug.remove();
+  /**
+   * This function takes the final data and populates the HTML.
+   * It also sets up the corrected button logic.
+   */
+  function renderPreview(data) {
+    const loader = document.getElementById('loader');
+    const debug = document.getElementById('debug');
+    
+    /*       === DATA DEFINITION ===
+      We build a new 'profileData' object here to ensure all
+      fields are correct and have fallbacks.
+    */
+    const profileData = {
+      contactId: data.contactId,
+      firstName: data.firstName || 'Nanny',
+      suburb: data.suburb || 'Sydney',
+      profilePicture: data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg',
+      nanny_ad: data.nanny_ad || data.profilePicture || '', // Fallback to profile pic
+      bioNanny: data.bioNanny || '',
+      shareUrl: `https://babybloomsydney.com.au/nanny/${data.contactId}` // <-- This is the corrected URL
+    };
 
-    // Show the content
-    document.querySelector('.copy-container').style.display = 'flex';
-    document.querySelector('.fb-post').style.display = 'block';
+    // Remove loading elements
+    if (loader) loader.remove();
+    if (debug) debug.remove();
 
-    // Populate the content
-    document.getElementById('profilePic').src = profileData.profilePicture;
-    document.getElementById('userName').textContent = profileData.firstName;
-    document.getElementById('previewImage').src = profileData.nanny_ad;
-    document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${profileData.suburb}`;
-    document.getElementById('previewDesc').textContent = `Hi, I'm ${profileData.firstName} and I'm now available to Nanny!`;
+    // Show the content
+    document.querySelector('.copy-container').style.display = 'flex';
+    document.querySelector('.fb-post').style.display = 'block';
 
-    // Set the post text from HTML
-    document.getElementById('postText').innerHTML = profileData.bioNanny;
-    
-    // --- CORRECTED BUTTON LOGIC ---
-    const copyBtn = document.getElementById('copyBtn');
-    const shareBtn = document.getElementById('shareBtn');
-    
-    // --- COPY BUTTON FIX ---
-    copyBtn.addEventListener('click', () => {
-      // 1. Create a plain text version from the bio HTML
-      let copyText = profileData.bioNanny;
-      
-      // 2. Replace <br> tags with newline characters
-      copyText = copyText.replace(/<br\s*\/?>/gi, '\n');
-      
-      // 3. Strip all other HTML tags
-      copyText = copyText.replace(/<[^>]*>/g, '');
-      
-      // 4. Decode any HTML entities (like &amp; -> &)
-      const tempEl = document.createElement('textarea');
-      tempEl.innerHTML = copyText;
-      copyText = tempEl.value;
+    // Populate the content
+    document.getElementById('profilePic').src = profileData.profilePicture;
+    document.getElementById('userName').textContent = profileData.firstName;
+    document.getElementById('previewImage').src = profileData.nanny_ad;
+IC('previewTitle').textContent = `Experienced Nanny Available | ${profileData.suburb}`;
+    document.getElementById('previewDesc').textContent = `Hi, I'm ${profileData.firstName} and I'm now available to Nanny!`;
 
-      // 5. Write the *clean text* to the clipboard
-      navigator.clipboard.writeText(copyText).then(() => {
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => copyBtn.textContent = 'Copy Post', 2000);
-      });
-    });
-    
-    // --- SHARE BUTTON FIX ---
-    shareBtn.addEventListener('click', () => {
-      // This button shares the *actual profile URL*, not the preview page
-      if (navigator.share) {
-        // Use Web Share API (Mobile)
-        navigator.share({
-          title: `Nanny Profile: ${profileData.firstName}`,
-          text: `Check out ${profileData.firstName}'s profile!`,
-          url: profileData.shareUrl // <-- USES THE CORRECT URL
-        });
-      } else {
-        // Fallback for Desktop (Copy link to clipboard)
-        navigator.clipboard.writeText(profileData.shareUrl).then(() => { // <-- USES THE CORRECT URL
-          shareBtn.textContent = 'Link Copied!';
-          setTimeout(() => shareBtn.textContent = 'Share Profile', 2000);
-        });
-      }
-    });
-  }
+    // Set the post text from HTML
+    document.getElementById('postText').innerHTML = profileData.bioNanny;
+    
+    /*
+      === CORRECTED BUTTON LOGIC ===
+    */
+    const copyBtn = document.getElementById('copyBtn');
+    const shareBtn = document.getElementById('shareBtn');
+   className
+    // --- COPY BUTTON FIX ---
+    copyBtn.addEventListener('click', () => {
+      // 1. Create a plain text version from the bio HTML
+      let copyText = profileData.bioNanny;
+      
+      // 2. Replace <br> tags with newline characters
+      copyText = copyText.replace(/<br\s*\/?>/gi, '\n');
+Code
+      // 3. Strip all other HTML tags
+      copyText = copyText.replace(/<[^>]*>/g, '');
+      
+      // 4. Decode any HTML entities (like &amp; -> &)
+      const tempEl = document.createElement('textarea');
+      tempEl.innerHTML = copyText;
+      copyText = tempEl.value;
+
+      // 5. Write the *clean text* to the clipboard
+      navigator.clipboard.writeText(copyText).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy Post', 2000);
+      });
+    });
+    
+    // --- SHARE BUTTON FIX ---
+    shareBtn.addEventListener('click', () => {
+      // This button shares the *actual profile URL*
+      if (navigator.share) {
+        // Use Web Share API (Mobile)
+        navigator.share({
+          title: `Nanny Profile: ${profileData.firstName}`,
+S         text: `Check out ${profileData.firstName}'s profile!`,
+          url: profileData.shareUrl // <-- USES THE CORRECT URL
+        });
+      } else {
+        // Fallback for Desktop (Copy link to clipboard)
+        navigator.clipboard.writeText(profileData.shareUrl).then(() => { // <-- USES THE CORRECT URL
+          shareBtn.textContent = 'Link Copied!';
+          setTimeout(() => shareBtn.textContent = 'Share Profile', 2000);
+        });
+      }
+    });
+  }
 </script>
 
 </body>
