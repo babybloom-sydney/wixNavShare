@@ -5,36 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
 
-  <!-- LZ-String for compressed data -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
-
   <style>
-    body{
-      background:#f0f2f5;
-      font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-      display:flex;flex-direction:column;align-items:center;
-      padding:20px;
-      margin:0;
-    }
-
-    .copy-container{
-      display:flex;gap:8px;margin-bottom:12px;
-    }
-    .copy-btn,.share-btn{
-      background:#1877F2;color:white;border:none;
-      padding:10px 16px;font-size:14px;font-weight:600;
-      border-radius:6px;cursor:pointer;
-      box-shadow:0 1px 2px rgba(0,0,0,.1);
-      transition:background .2s ease;
-    }
+    body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
+    .copy-container{display:flex;gap:8px;margin-bottom:12px;}
+    .copy-btn,.share-btn{background:#1877F2;color:white;border:none;padding:10px 16px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease;}
     .copy-btn:hover,.share-btn:hover{background:#1666d1;}
     .copy-btn.copied,.share-btn.copied{background:#4B8BF4;}
-
-    .fb-post{
-      width:500px;max-width:100%;
-      border:1px solid #ddd;border-radius:8px;
-      background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);
-    }
+    .fb-post{width:500px;max-width:100%;border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);}
     .fb-header{display:flex;align-items:center;padding:12px;}
     .fb-header img{width:40px;height:40px;border-radius:50%;margin-right:10px;}
     .fb-header .fb-user-name{font-weight:bold;font-size:14px;color:#050505;}
@@ -53,10 +30,10 @@
     .fb-link-preview img{width:100%;display:block;object-fit:cover;}
     .fb-link-text{padding:8px;}
     .fb-link-text .domain{font-size:11px;color:#65676b;margin-bottom:2px;}
-   
- .fb-link-text .title{font-weight:bold;font-size:14px;color:#050505;margin-bottom:2px;}
+    .fb-link-text .title{font-weight:bold;font-size:14px;color:#050505;margin-bottom:2px;}
     .fb-link-text .description{font-size:13px;color:#050505;}
     #loader{text-align:center;margin:40px;font-size:16px;color:#666;}
+    .error{color:red;text-align:center;margin:40px;}
   </style>
 </head>
 <body>
@@ -102,44 +79,69 @@
 </div>
 
 <script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const compressed = urlParams.get('data');
-  let data = {};
+  // === YOUR LIVE CSV URL ===
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiSEP_YMBV1ihcGamtLVjwgDV7cEvhZOLrLVPEtco4meDdTgPR8MB3TgC1UdfsJ9JAG2JDEgSomNEA/pub?gid=818248824&single=true&output=csv';
 
-  if (!compressed) {
-    document.body.innerHTML = "<h2>Error: No data in URL</h2>";
-  } else {
-    try {
-      // Try LZ-String first
-      let json = LZString.decompressFromEncodedURIComponent(compressed);
-      if (!json) {
-        json = atob(compressed); // Fallback
-      }
-      data = JSON.parse(json);
-      renderPreview();
-    } catch (e) {
-      document.body.innerHTML = "<h2>Error: Invalid data</h2>";
-      console.error(e);
-    }
+  // === GET CONTACT ID FROM URL: ?id=abc123 ===
+  const urlParams = new URLSearchParams(window.location.search);
+  const contactId = urlParams.get('id');
+
+  const loader = document.getElementById('loader');
+
+  if (!contactId) {
+    loader.innerHTML = '<div class="error">Error: No ID in URL</div>';
+    return;
   }
 
-  function renderPreview() {
-    document.getElementById('loader').remove();
+  // === FETCH & PARSE CSV ===
+  fetch(CSV_URL)
+    .then(r => r.text())
+    .then(csv => {
+      // Split into rows, clean quotes
+      const rows = csv.split('\n').map(row => 
+        row.split(',').map(cell => cell.trim().replace(/^"|"$/g, ''))
+      );
+      const dataRows = rows.slice(1); // skip header
+
+      // Find row where Column A (index 0) === contactId
+      const row = dataRows.find(r => r[0] === contactId);
+
+      if (!row) {
+        throw new Error('Profile not found in sheet');
+      }
+
+      // Map columns: A=Contact ID, B=First name, C=Suburb, D=NANNY_PP, E=NANNY_AD, F=BIO
+      const data = {
+        firstName: row[1] || 'Nanny',
+        suburb: row[2] || 'Sydney',
+        profilePicture: row[3] || '',
+        nanny_ad: row[4] || '',
+        bioNanny: row[5] || '',
+        shareUrl: `https://babybloomsydney.com.au/nanny/${contactId}`
+      };
+
+      renderPreview(data);
+    })
+    .catch(err => {
+      loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+    });
+
+  function renderPreview(data) {
+    loader.remove();
     document.querySelector('.copy-container').style.display = 'flex';
     document.querySelector('.fb-post').style.display = 'block';
 
-    document.getElementById('profilePic').src = data.profilePic || 'https://randomuser.me/api/portraits/women/44.jpg';
+    document.getElementById('profilePic').src = data.profilePicture || 'https://randomuser.me/api/portraits/women/44.jpg';
     document.getElementById('userName').textContent = data.firstName;
-    document.getElementById('previewImage').src = data.profilePic || '';
+    document.getElementById('previewImage').src = data.nanny_ad || data.profilePicture || '';
     document.getElementById('previewTitle').textContent = `Experienced Nanny Available | ${data.suburb}`;
     document.getElementById('previewDesc').textContent = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
 
-    const bio = data.bioNanny || '';
-    const formatted = bio.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-    document.getElementById('postText').innerHTML = `<p>${formatted}</p>`;
+    const bio = data.bioNanny.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
   }
 
-  // Copy Post
+  // === COPY POST ===
   document.getElementById('copyBtn').addEventListener('click', async (e) => {
     e.preventDefault();
     const clone = document.getElementById('postText').cloneNode(true);
@@ -169,13 +171,13 @@
     }
   });
 
-  // Share Profile
+  // === SHARE PROFILE ===
   document.getElementById('shareBtn').addEventListener('click', async (e) => {
     e.preventDefault();
     const shareData = {
       title: document.getElementById('previewTitle').textContent,
       text: document.getElementById('previewDesc').textContent,
-      url: data.shareUrl
+      url: `https://babybloomsydney.com.au/nanny/${contactId}`
     };
 
     if (navigator.share) {
