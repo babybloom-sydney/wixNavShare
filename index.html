@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nanny Profile Preview</title>
 
+  <!-- PapaParse for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
   <style>
     body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
     .copy-container{display:flex;gap:8px;margin-bottom:12px;}
@@ -81,8 +84,8 @@
 </div>
 
 <script>
-  // === YOUR LIVE CSV URL ===
-  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiSEP_YMBV1ihcGamtLVjwgDV7cEvhZOLrLVPEtco4meDdTgPR8MB3TgC1UdfsJ9JAG2JDEgSomNEA/pub?gid=818248824&single=true&output=csv';
+  // === YOUR LIVE CSV URL + CACHE BUSTER ===
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQiSEP_YMBV1ihcGamtLVjwgDV7cEvhZOLrLVPEtco4meDdTgPR8MB3TgC1UdfsJ9JAG2JDEgSomNEA/pub?gid=818248824&single=true&output=csv&_t=' + Date.now();
 
   const urlParams = new URLSearchParams(window.location.search);
   const contactId = urlParams.get('id');
@@ -104,37 +107,37 @@
     .then(csv => {
       debug.innerHTML += `<br>CSV loaded (${csv.length} chars)`;
 
-      // Split rows, clean quotes and empty lines
-      const rows = csv
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line)
-        .map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
+      Papa.parse(csv, {
+        complete: (result) => {
+          const rows = result.data;
+          if (rows.length < 2) throw new Error('CSV is empty');
 
-      if (rows.length < 2) throw new Error('CSV is empty');
+          const dataRows = rows.slice(1);
 
-      const dataRows = rows.slice(1);
+          const sampleIds = dataRows.slice(0, 3).map(r => r[0]).join(', ');
+          debug.innerHTML += `<br>Sample IDs: ${sampleIds || 'none'}`;
 
-      // Debug: show first few IDs
-      const sampleIds = dataRows.slice(0, 3).map(r => r[0]).join(', ');
-      debug.innerHTML += `<br>Sample IDs in CSV: ${sampleIds || 'none'}`;
+          const row = dataRows.find(r => r[0] === contactId);
 
-      const row = dataRows.find(r => r[0] === contactId);
+          if (!row) {
+            throw new Error(`Contact ID not found: ${contactId}`);
+          }
 
-      if (!row) {
-        throw new Error(`Contact ID not found: ${contactId}`);
-      }
+          const data = {
+            firstName: row[1] || 'Nanny',
+            suburb: row[2] || 'Sydney',
+            profilePicture: row[3] || '',
+            nanny_ad: row[4] || '',
+            bioNanny: row[5] || '',
+            shareUrl: `https://babybloomsydney.com.au/nanny/${contactId}`
+          };
 
-      const data = {
-        firstName: row[1] || 'Nanny',
-        suburb: row[2] || 'Sydney',
-        profilePicture: row[3] || '',
-        nanny_ad: row[4] || '',
-        bioNanny: row[5] || '',
-        shareUrl: `https://babybloomsydney.com.au/nanny/${contactId}`
-      };
-
-      renderPreview(data);
+          renderPreview(data);
+        },
+        error: (err) => {
+          throw err;
+        }
+      });
     })
     .catch(err => {
       loader.innerHTML = `<div class="error">Error: ${err.message}</div>`;
