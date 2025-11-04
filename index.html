@@ -6,12 +6,13 @@
   <title>Nanny Profile Preview</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <style>
+    /* YOUR CSS IS 100% UNTOUCHED */
     body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
     .copy-container{display:flex;gap:8px;margin-bottom:12px;}
     .copy-btn,.share-btn{background:#1877F2;color:white;border:none;padding:10px 16px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease; text-decoration: none; display: inline-block;}
     .copy-btn:hover,.share-btn:hover{background:#1666d1;}
     .copy-btn.copied,.share-btn.copied{background:#4B8BF4;}
-    .share-btn:disabled { background: #9dbdf2; cursor: not-allowed; }
+    .share-btn:disabled { background: #9dbdf2; cursor: not-allowed; } /* Added for new logic */
     .fb-post{width:500px;max-width:100%;border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);}
     .fb-header{display:flex;align-items:center;padding:12px;}
     .fb-header img{width:40px;height:40px;border-radius:50%;margin-right:10px;}
@@ -49,7 +50,6 @@
     Return To Profile
   </a>
 </div>
-
 <div class="fb-post" style="display:none;">
   <div class="fb-header">
     <img id="profilePic" src="" alt="Profile">
@@ -80,13 +80,14 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+d document.addEventListener('DOMContentLoaded', () => {
     const loader = document.getElementById('loader');
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const dataParam = urlParams.get('data');
       if (!dataParam) throw new Error('No data in URL');
 
+      // All 'debug' lines have been removed to prevent crashing
       const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
       const compressedData = atob(base64Data);
       const compressedArray = new Uint8Array(compressedData.length);
@@ -108,7 +109,7 @@
     document.getElementById('loader').remove();
     document.querySelector('.copy-container').style.display = 'flex';
     document.querySelector('.fb-post').style.display = 'block';
-    
+
     // Create the final data object, filling in defaults
     const profileData = {
       contactId: data.contactId,
@@ -130,6 +131,7 @@
     document.getElementById('postText').innerHTML = `<p>${bio}</p>`;
 
     // === ADD DYNAMIC OG TAGS ===
+    // This logic is your working version
     const head = document.head;
     const ogTags = [
       { property: 'og:title', content: `💫 Experienced Nanny Available 💫 | ${profileData.suburb}` },
@@ -148,121 +150,90 @@
       }
       meta.setAttribute('content', tag.content);
     });
-  }
 
-  // === COPY POST - CLEAN TEXT ONLY ===
-  document.getElementById('copyBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const postEl = document.getElementById('postText');
-    const clone = postEl.cloneNode(true);
-    clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-    let text = clone.textContent.trim();
-    text = text.split('\n').map(l => l.trim()).join('\n');
+    /* === 2. SCRIPT CHANGED HERE ===
+      The button listeners are now INSIDE renderPreview to ensure
+      the buttons exist before we attach listeners to them.
+    */
 
-    let copied = false;
-    if (navigator.clipboard) {
-      try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {}
-G   }
-    if (!copied) {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      copied = document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
+    // === COPY POST - CLEAN TEXT ONLY ===
+    document.getElementById('copyBtn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const postEl = document.getElementById('postText');
+      const clone = postEl.cloneNode(true);
+      clone.innerHTML = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+      let text = clone.textContent.trim();
+      text = text.split('\n').map(l => l.trim()).join('\n');
 
-    if (copied) {
-      e.target.textContent = 'Post Copied';
-      e.target.classList.add('copied');
- S    setTimeout(() => {
-        e.target.textContent = 'Copy Post';
-A       e.target.classList.remove('copied');
-      }, 1000);
-    }
-  });
+      let copied = false;
+      if (navigator.clipboard) {
+        try { await navigator.clipboard.writeText(text); copied = true; } catch (e) {}
+      }
+      if (!copied) {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+d      document.body.appendChild(ta); ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
 
-  // === SHARE PROFILE - UPDATED LOGIC ===
-  document.getElementById('shareBtn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const shareBtn = e.target; // Get the share button element
+      if (copied) {
+        e.target.textContent = 'Post Copied';
+id      e.target.classList.add('copied');
+        setTimeout(() => {
+          e.target.textContent = 'Copy Post';
+          e.target.classList.remove('copied');
+        }, 1000);
+      }
+    });
 
-    let contactId = '';
-    let nannyUrl = '';
-    // --- THIS IS THE UPDATED SECTION ---
-    let shareTitle = 'Nanny Profile';
-    let shareText = 'Check out this nanny profile!';
-    // --- END UPDATED SECTION ---
+    // === SHARE PROFILE - UPDATED LOGIC ===
+    document.getElementById('shareBtn').addEventListener('click', async (e) => {
+i    e.preventDefault();
+      const shareBtn = e.target; // Get the share button element
 
-C   try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const dataParam = urlParams.get('data');
-      if (dataParam) {
-        const base64Data = dataParam.replace(/-/g, '+').replace(/_/g, '/');
-        const compressedData = atob(base64Data);
-        const compressedArray = new Uint8Array(compressedData.length);
-        for (let i = 0; i < compressedData.length; i++) {
-          compressedArray[i] = compressedData.charCodeAt(i);
-       _ }
-        const jsonString = pako.inflate(compressedArray, { to: 'string' });
-s       const data = JSON.parse(jsonString);
-        contactId = data.contactId;
+      // We already have profileData from this function's scope
+      const nannyUrl = profileData.shareUrl;
+      const shareData = {
+        title: `💫 Experienced Nanny Available! 💫 | ${profileData.suburb}`,
+        text: `Hi, I'm ${profileData.firstName} and I'm now available to Nanny!`,
+        url: nannyUrl
+      };
 
-        // --- THIS IS THE UPDATED SECTION ---
-        // Set all the share data dynamically
-        nannyUrl = `https://babybloomsydney.com.au/nanny/${contactId}`;
-        shareTitle = `💫 Experienced Nanny Available! 💫 | ${data.suburb}`;
-        shareText = `Hi, I'm ${data.firstName} and I'm now available to Nanny!`;
-        // --- END UPDATED SECTION ---
-      }
-    } catch (e) {
-      console.error("Error reading data for share:", e);
-    }
+      if (navigator.share) {
+        try {
+          // Wait for the share handoff
+          await navigator.share(shareData);
 
-    // Ensure nannyUrl is not empty
-    if (!nannyUrl) {
-      alert('Could not generate share link.');
-      return;
-    }
+          // --- THIS IS THE NEW LOGIC ---
+          
+          // 1. Update the Share button
+          shareBtn.textContent = 'Shared!';
+          shareBtn.classList.add('copied');
+          shareBtn.disabled = true; // Disable it
 
-    const shareData = {
-      title: shareTitle,
-      text: shareText,
-      url: nannyUrl
-    };
+          // 2. Get and configure the new Return button
+          const returnBtn = document.getElementById('returnBtn');
+          returnBtn.href = nannyUrl; // Set the correct link
+          returnBtn.style.display = 'inline-block'; // Show it
 
-    if (navigator.share) {
-      try {
-        // Wait for the share handoff
-        await navigator.share(shareData);
-
-        // --- THIS IS THE NEW LOGIC ---
-        
-        // 1. Update the Share button
-        shareBtn.textContent = 'Shared!';
-        shareBtn.classList.add('copied');
-        shareBtn.disabled = true; // Disable it
-
-        // 2. Get and configure the new Return button
-        const returnBtn = document.getElementById('returnBtn');
-        returnBtn.href = nannyUrl; // Set the correct URL
-        returnBtn.style.display = 'inline-block'; // Show it
-
-      } catch (err) {
-        // This block runs if the user hits "Cancel"
-        console.log('Share was canceled or failed.', err);
-      }
-    } else {
-      // Fallback for desktop (copy link)
-T     navigator.clipboard.writeText(nannyUrl).then(() => {
-        shareBtn.textContent = 'URL Copied!';
-        shareBtn.classList.add('copied');
-        setTimeout(() => {
-          shareBtn.textContent = 'Share Profile';
-          shareBtn.classList.remove('copied');
-        }, 1000);
-      });
-    }
-  });
+Image     } catch (err) {
+          // This block runs if the user hits "Cancel"
+          console.log('Share was canceled or failed.', err);
+        }
+      } else {
+        // Fallback for desktop (copy link)
+        navigator.clipboard.writeText(nannyUrl).then(() => {
+          shareBtn.textContent = 'URL Copied!';
+          shareBtn.classList.add('copied');
+          setTimeout(() => {
+            shareBtn.textContent = 'Share Profile';
+  s         shareBtn.classList.remove('copied');
+          }, 1000);
+ s    });
+      }
+    });
+  } // --- END OF renderPreview FUNCTION ---
 </script>
 
 </body>
