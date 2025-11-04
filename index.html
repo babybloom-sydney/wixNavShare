@@ -7,8 +7,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
   <style>
     body{background:#f0f2f5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px;margin:0;}
-    .copy-container{display:flex;gap:8px;margin-bottom:12px;}
-    .copy-btn,.share-btn,.return-btn{background:#1877F2;color:white;border:none;padding:10px 16px;font-size:14px;font-weight:600;border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease;}
+    .copy-container{display:flex;gap:6px;margin-bottom:12px;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;}
+    .copy-btn,.share-btn,.return-btn{
+      background:#1877F2;color:white;border:none;padding:8px 12px;font-size:13px;font-weight:600;
+      border-radius:6px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.1);transition:background .2s ease;
+      min-width:0;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
+    }
     .copy-btn:hover,.share-btn:hover,.return-btn:hover{background:#1666d1;}
     .copy-btn.copied,.share-btn.copied,.return-btn.copied{background:#4B8BF4;}
     .fb-post{width:500px;max-width:100%;border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);}
@@ -41,7 +45,7 @@
 <div class="copy-container" style="display:none;">
   <button class="copy-btn" id="copyBtn">Copy Post</button>
   <button class="share-btn" id="shareBtn">Share Profile</button>
-  <button class="return-btn" id="returnBtn">Return To Profile</button> <!-- NEW BUTTON -->
+  <button class="return-btn" id="returnBtn" style="display:none;">Return To Profile</button>
 </div>
 <div class="fb-post" style="display:none;">
   <div class="fb-header">
@@ -150,7 +154,7 @@
       }, 1000);
     }
   });
-  // === SHARE PROFILE - CORRECT NANNY URL ===
+  // === SHARE PROFILE - SHOW RETURN BUTTON ON SUCCESS ===
   document.getElementById('shareBtn').addEventListener('click', async (e) => {
     e.preventDefault();
     let contactId = '';
@@ -184,6 +188,8 @@
           e.target.textContent = 'Share Profile';
           e.target.classList.remove('copied');
         }, 1000);
+        // === SHOW RETURN BUTTON ON SUCCESS ===
+        document.getElementById('returnBtn').style.display = 'inline-block';
       } catch (err) {
         alert('Share failed.');
       }
@@ -198,7 +204,7 @@
       });
     }
   });
-  // === NEW: RETURN TO PROFILE BUTTON ===
+  // === RETURN TO PROFILE BUTTON ===
   document.getElementById('returnBtn').addEventListener('click', (e) => {
     let contactId = '';
     try {
